@@ -1,6 +1,6 @@
 from blockchain import Blockchain
 from uuid import uuid4
-from verification import Verification
+from utility.verification import Verification
 
 
 class Node:
@@ -33,10 +33,10 @@ class Node:
             elif user_choice == '3':
                 self.blockchain.mine_block()
             elif user_choice == '4':
-                if Verification.verify_transaction(
+                if Verification.verify_transactions(
                         self.blockchain.get_open_transactions(),
                         self.blockchain.get_balance):
-                    print('All transactions are valid')
+                    print('All transactions are valid!!')
                 else:
                     print('There are invalid transactions')
             elif user_choice == 'q':

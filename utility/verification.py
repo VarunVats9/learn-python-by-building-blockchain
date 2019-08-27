@@ -1,4 +1,4 @@
-from hash_util import hash_string_256, hash_block
+from utility.hash_util import hash_string_256, hash_block
 
 
 class Verification:
@@ -6,8 +6,8 @@ class Verification:
     @classmethod
     def verify_transactions(cls, open_transactions, get_balance):
         """ Verifies all the open transactions. """
-        return all([cls.verify_transaction(get_balance)
-                    for verify_transactions in open_transactions])
+        return all([cls.verify_transaction(tx, get_balance)
+                    for tx in open_transactions])
 
     @classmethod
     def verify_chain(cls, blockchain):
