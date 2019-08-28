@@ -1,4 +1,5 @@
 from utility.hash_util import hash_string_256, hash_block
+from wallet import Wallet
 
 
 class Verification:
@@ -6,7 +7,7 @@ class Verification:
     @classmethod
     def verify_transactions(cls, open_transactions, get_balance):
         """ Verifies all the open transactions. """
-        return all([cls.verify_transaction(tx, get_balance)
+        return all([cls.verify_transaction(tx, get_balance, False)
                     for tx in open_transactions])
 
     @classmethod
@@ -25,9 +26,13 @@ class Verification:
         return True
 
     @staticmethod
-    def verify_transaction(transaction, get_balance):
+    def verify_transaction(transaction, get_balance, check_funds=True):
         """ Verifies the given transaction. """
-        return transaction.amount <= get_balance()
+        if check_funds:
+            return (transaction.amount <= get_balance() and
+                    Wallet.verify_transaction(transaction))
+        else:
+            return Wallet.verify_transaction(transaction)
 
     @staticmethod
     def valid_proof(transactions, last_hash, proof):
