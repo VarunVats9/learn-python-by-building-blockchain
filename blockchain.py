@@ -169,8 +169,8 @@ class Blockchain:
                                 transactions, block['proof'],
                                 block['timestamp'])
         self.__chain.append(converted_block)
-        '''stored_transactions = self.__open_transactions[:]
-        for itx in block['transitions']:
+        stored_transactions = self.__open_transactions[:]
+        for itx in block['transactions']:
             for opentx in stored_transactions:
                 if (opentx.sender == itx['sender'] and
                         opentx.recipient == itx['recipient'] and
@@ -179,7 +179,7 @@ class Blockchain:
                     try:
                         self.__open_transactions.remove(opentx)
                     except ValueError:
-                        print('Item was already removed')'''
+                        print('Item was already removed')
         self.save_data()
         return True
 
