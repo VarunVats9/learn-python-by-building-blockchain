@@ -29,6 +29,11 @@ def get_chain():
 
 @app.route('/mine', methods=['POST'])
 def mine():
+    if blockchain.resolve_conflicts:
+        response = {
+            'message': 'Resolve conflicts first, block not added!'
+        }
+        return jsonify(response), 409
     block = blockchain.mine_block()
     if block is not None:
         dict_block = block.__dict__.copy()
@@ -203,14 +208,12 @@ def get_nodes():
 def broadcast_transaction():
     values = request.get_json()
     if not values:
-        print('This error or')
         response = {
             'message': 'No data attached.'
         }
         return jsonify(response), 400
     required = ['sender', 'recipient', 'amount', 'signature']
     if not all(key in values for key in required):
-        print('Can be this error or')
         response = {
             'message': 'Some fields are missing.'
         }
@@ -264,19 +267,33 @@ def broadcast_block():
             response = {
                 'message': 'Block seems to be incorrect.'
             }
-            return jsonify(response), 500
+            return jsonify(response), 409
     elif block['index'] > chain[-1].index:
-        print("This was the error")
         response = {
             'message': 'Blockchain seems to differ from local blockchain'
         }
-        return jsonify(response), 500
+        blockchain.resolve_conflicts = True
+        return jsonify(response), 200
     else:
         response = {
             'message': 'Blockchain seems to be shorted, \
             some blocks are not added.'
         }
         return jsonify(response), 409
+
+
+@app.route('/resolve-conflicts', methods=['POST'])
+def resolve_conflicts():
+    replaced = blockchain.resolve()
+    if replaced:
+        response = {
+            'message': 'The blockchain was resolved.'
+        }
+    else:
+        response = {
+            'message': 'Kept the local chain !'
+        }
+    return jsonify(response), 200
 
 
 if __name__ == '__main__':

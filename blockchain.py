@@ -22,6 +22,7 @@ class Blockchain:
         self.__peer_nodes = set()
         self.public_key = public_key
         self.node_id = node_id
+        self.resolve_conflicts = False
         self.load_data()
 
     def get_chain(self):
@@ -212,10 +213,41 @@ class Blockchain:
                 if (response.status_code == 400 or
                         response.status_code == 500):
                     print('Transaction declined, need resolving')
+                if response.status_code == 409:
+                    self.resolve_conflicts = True
             except requests.exceptions.ConnectionError:
                 print("Got connection error .. ")
                 continue
         return block
+
+    def resolve(self):
+        winner_chain = self.__chain
+        replace = False
+        for node in self.__peer_nodes:
+            url = 'http://{}/chain'.format(node)
+            try:
+                response = requests.get(url)
+                node_chain = response.json()
+                node_chain = [Block(block['index'], block['previous_hash'],
+                                    [Transaction(tx['sender'], tx['recipient'],
+                                                 tx['signature'], tx['amount'])
+                                     for tx in block['transactions']],
+                                    block['proof'], block['timestamp'])
+                              for block in node_chain]
+                node_chain_len = len(node_chain)
+                local_cahin_length = len(winner_chain)
+                if (node_chain_len > local_cahin_length and
+                        Verification.verify_chain(node_chain)):
+                    winner_chain = node_chain
+                    replace = True
+            except requests.exceptions.ConnectionError:
+                continue
+        self.resolve_conflicts = False
+        self.__chain = winner_chain
+        if replace:
+            self.__open_transactions = []
+        self.save_data()
+        return replace
 
     def add_peer_node(self, node):
         """ Add a new node to the peer set.
