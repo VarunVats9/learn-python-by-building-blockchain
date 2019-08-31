@@ -18,8 +18,9 @@ class Blockchain:
         genesis_block = Block(0, '', [], 100, 0)
         self.__chain = [genesis_block]
         self.__open_transactions = []
-        self.load_data()
+        self.__peer_nodes = set()
         self.hosting_node = hosting_node_id
+        self.load_data()
 
     def get_chain(self):
         return self.__chain[:]
@@ -44,7 +45,7 @@ class Blockchain:
                         block['proof'], block['timestamp'])
                     updated_blockchain.append(updated_block)
                 self.__chain = updated_blockchain
-                open_transactions = json.loads(file_content[1])
+                open_transactions = json.loads(file_content[1][:-1])
                 updated_open_transactions = []
                 for tx in open_transactions:
                     updated_tx = Transaction(
@@ -52,6 +53,8 @@ class Blockchain:
                         tx['amount'])
                     updated_open_transactions.append(updated_tx)
                 self.__open_transactions = updated_open_transactions
+                peer_nodes = json.loads(file_content[2])
+                self.__peer_nodes = set(peer_nodes)
         except (IOError, IndexError):
             print('Handled Exception ...')
         finally:
@@ -72,6 +75,8 @@ class Blockchain:
                 f.write('\n')
                 saveable_tx = [tx.__dict__ for tx in self.__open_transactions]
                 f.write(json.dumps(saveable_tx))
+                f.write('\n')
+                f.write(json.dumps(list(self.__peer_nodes)))
         except IOError:
             print('Serving failed!')
 
@@ -150,3 +155,27 @@ class Blockchain:
         self.__open_transactions = []
         self.save_data()
         return block
+
+    def add_peer_node(self, node):
+        """ Add a new node to the peer set.
+
+        Arguments:
+            :node: The node url which should be added.
+        """
+        self.__peer_nodes.add(node)
+        self.save_data()
+
+    def remove_peer_node(self, node):
+        """ Remove the node from the peer set.
+
+        Arguments:
+            :node: The node url which should be removed.
+        """
+        self.__peer_nodes.discard(node)
+        print(self.__peer_nodes)
+        print(node)
+        self.save_data()
+
+    def get_peer_nodes(self):
+        """ Fetches all the peer nodes. """
+        return list(self.__peer_nodes)
