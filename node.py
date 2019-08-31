@@ -203,12 +203,14 @@ def get_nodes():
 def broadcast_transaction():
     values = request.get_json()
     if not values:
+        print('This error or')
         response = {
             'message': 'No data attached.'
         }
         return jsonify(response), 400
     required = ['sender', 'recipient', 'amount', 'signature']
     if not all(key in values for key in required):
+        print('Can be this error or')
         response = {
             'message': 'Some fields are missing.'
         }
@@ -226,8 +228,7 @@ def broadcast_transaction():
                 'sender': values['sender'],
                 'amount': values['amount'],
                 'signature': values['signature']
-            },
-            'funds': blockchain.get_balance()
+            }
         }
         return jsonify(response), 200
     else:

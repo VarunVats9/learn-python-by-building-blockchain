@@ -132,8 +132,8 @@ class Blockchain:
             :transaction_amount: The amount that should be added.
             :last_transaction: The last blockchian transaction (default [1]).
         """
-        if self.public_key is None:
-            return False
+        # if self.public_key is None:
+        #    return False
         transaction = Transaction(sender, recipient, signature, amount)
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
@@ -145,6 +145,7 @@ class Blockchain:
                         response = requests.post(
                             url, json={'sender': sender,
                                        'recipient': recipient,
+                                       'signature': signature,
                                        'amount': amount})
                         if (response.status_code == 400 or
                                 response.status_code == 500):
@@ -160,7 +161,7 @@ class Blockchain:
                                     tx['signature'], tx['amount'])
                         for tx in block['transactions']]
         proof_is_valid = Verification.valid_proof(
-            transactions[-1], block['previous_hash'], block['proof'])
+            transactions[:-1], block['previous_hash'], block['proof'])
         hashes_match = hash_block(self.__chain[-1]) == block['previous_hash']
         if not proof_is_valid or not hashes_match:
             return False
@@ -168,7 +169,7 @@ class Blockchain:
                                 transactions, block['proof'],
                                 block['timestamp'])
         self.__chain.append(converted_block)
-        stored_transactions = self.__open_transactions[:]
+        '''stored_transactions = self.__open_transactions[:]
         for itx in block['transitions']:
             for opentx in stored_transactions:
                 if (opentx.sender == itx['sender'] and
@@ -178,7 +179,7 @@ class Blockchain:
                     try:
                         self.__open_transactions.remove(opentx)
                     except ValueError:
-                        print('Item was already removed')
+                        print('Item was already removed')'''
         self.save_data()
         return True
 
@@ -203,15 +204,14 @@ class Blockchain:
         self.save_data()
         for node in self.__peer_nodes:
             url = 'http://{}/broadcast-block'.format(node)
+            converted_block = block.__dict__.copy()
+            converted_block['transactions'] = [tx.__dict__ for tx in
+                                               converted_block['transactions']]
             try:
-                converted_block = block.__dict__.copy()
-                converted_block['transactions'] = [tx.__dict__ for tx in
-                                                   converted_block['transactions']]
                 response = requests.post(url, json={'block': converted_block})
                 if (response.status_code == 400 or
                         response.status_code == 500):
                     print('Transaction declined, need resolving')
-                    return None
             except requests.exceptions.ConnectionError:
                 print("Got connection error .. ")
                 continue
